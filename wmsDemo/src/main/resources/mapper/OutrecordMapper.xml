@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fenseaizi.wmsdemo.mapper.OutrecordMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.fenseaizi.wmsdemo.entity.Outrecord">
+        <id column="id" property="id" />
+        <result column="goods" property="goods" />
+        <result column="user" property="user" />
+        <result column="admin" property="admin" />
+        <result column="count" property="count" />
+        <result column="create_time" property="createTime" />
+        <result column="status" property="status" />
+        <result column="update_time" property="updateTime" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, goods, user, admin, count, create_time, status, update_time, remark
+    </sql>
+    <select id="PageList" resultType="com.fenseaizi.wmsdemo.entity.Outrecord">
+        select * from outrecord ${ew.customSqlSegment}
+    </select>
+    <select id="weekCount" resultType="com.fenseaizi.wmsdemo.entity.ChartPie">
+        SELECT
+        CASE GROUP_CONCAT(WEEKDAY(update_time))
+        WHEN 0 THEN '星期一'
+        WHEN 1 THEN '星期二'
+        WHEN 2 THEN '星期三'
+        WHEN 3 THEN '星期四'
+        WHEN 4 THEN '星期五'
+        WHEN 5 THEN '星期六'
+        WHEN 6 THEN '星期日'
+        END AS name,
+        sum(outrecord.count) AS value
+        FROM outrecord
+        WHERE update_time &gt;= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+        <if test="goods != 0">
+            AND goods = #{goods}
+        </if>
+        <if test="user != null and user != ''">
+            AND user = #{user}
+        </if>
+        GROUP BY WEEKDAY(update_time)
+        ORDER BY WEEKDAY(update_time) ASC
+    </select>
+    <select id="monthCount" resultType="com.fenseaizi.wmsdemo.entity.ChartPie">
+        SELECT
+        DATE_FORMAT(update_time, '%m-%d') AS name,
+        sum(outrecord.count) AS value
+        FROM outrecord
+        WHERE update_time &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01') -- 查询本月的订单
+        <if test="goods != 0">
+            AND goods = #{goods}
+        </if>
+        <if test="user != null and user != ''">
+            AND user = #{user}
+        </if>
+        GROUP BY DATE_FORMAT(update_time, '%m-%d')
+        ORDER BY DATE_FORMAT(update_time, '%m-%d') ASC
+    </select>
+    <select id="yearCount" resultType="com.fenseaizi.wmsdemo.entity.ChartPie">
+        SELECT
+        CASE  GROUP_CONCAT(MONTH(update_time))
+        WHEN 1 THEN '一月'
+        WHEN 2 THEN '二月'
+        WHEN 3 THEN '三月'
+        WHEN 4 THEN '四月'
+        WHEN 5 THEN '五月'
+        WHEN 6 THEN '六月'
+        WHEN 7 THEN '七月'
+        WHEN 8 THEN '八月'
+        WHEN 9 THEN '九月'
+        WHEN 10 THEN '十月'
+        WHEN 11 THEN '十一月'
+        WHEN 12 THEN '十二月'
+        END AS name, SUM(outrecord.count) AS value
+        FROM outrecord
+        WHERE update_time &gt;= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+        <if test="goods != 0">
+            AND goods = #{goods}
+        </if>
+        <if test="user != null and user != ''">
+            AND user = #{user}
+        </if>
+        GROUP BY MONTH(update_time)
+        ORDER BY MONTH(update_time) ASC;
+    </select>
+</mapper>
